@@ -1,0 +1,81 @@
+#!/usr/bin/python
+#
+# vim: set ts=4 sw=4 sts=0 et :
+
+from __future__ import print_function
+
+import pexpect, os, sys, getopt, time
+
+def usage(code):
+    print('Usage: wait-ios-serial [-i prompt] -s server [-p port] [-i prompt]\n', file=sys.stderr)
+    sys.exit(code)
+
+def main(argv):
+    # Options
+    server = 'localhost'
+    port = 23
+    tmout = 30
+    input = '>'
+    attempts = 30
+    debug = 2
+
+    # Local vars
+    tries = 0
+
+    # Cmdline parsing
+    try:
+        opts, args = getopt.getopt(argv,"di:p:s:t:",["debug","input=","port=","server=","timeout="])
+    except getopt.GetoptError:
+        usage(2)
+    for opt, arg in opts:
+        if opt in ('-d','--debug'):
+            debug += 1
+        if opt in ('-i','--input'):
+            input = arg
+        if opt in ('-p','--port'):
+            port = arg
+        if opt in ('-s','--server'):
+            server = arg
+        if opt in ('-t','--timeout'):
+            tmout = int(arg)
+    if server == '':
+        usage(2)
+
+    # The meat
+    child = pexpect.spawn('telnet %s %s' % (server,port))
+
+    if debug > 0:
+        child.logfile = sys.stdout
+    try:
+        child.expect("Escape character is .*", timeout=tmout)
+    except pexpect.EOF as e:
+        exit(1)
+
+    # Wait for the system to boot
+    silent = False
+    while not silent:
+        try:
+            child.expect(['.+'], timeout=tmout)
+
+        except pexpect.TIMEOUT as e:
+            if debug > 0:
+                print('\nConnection silent for %d seconds.' % tmout, file=sys.stderr)
+            silent = True
+
+        except pexpect.EOF as e:
+            if debug > 0:
+                print('Connection refused or closed.', file=sys.stderr)
+            exit(1)
+    # Send a carriage return
+    if debug > 0:
+        print('Waiting for input "%s".' % input, file=sys.stderr)
+    child.send("\r")
+    try:
+        child.expect([input], timeout=tmout)
+    except pexpect.TIMEOUT:
+        print('Failed.', file=sys.stderr)
+        exit(1)
+
+if __name__ == "__main__":
+    main(sys.argv[1:])
+
