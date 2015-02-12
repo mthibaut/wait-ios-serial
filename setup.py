@@ -8,7 +8,7 @@ setup(name='wait-ios-serial',
       description='Wait for a Cisco IOS device to come up from boot',
       author='Maarten Thibaut',
       author_email='mthibaut@cisco.com',
-      scripts=['scripts/wait-ios-serial', 'scripts/wait-ios-login'],
+      scripts=['scripts/wait-ios-login', 'scripts/wait-ios-serial'],
       install_requires=['pexpect']
 )
 

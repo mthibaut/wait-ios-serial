@@ -1,2 +1,3 @@
 setup.py
 scripts/wait-ios-serial
+scripts/wait-ios-login
