@@ -66,24 +66,21 @@ def main(argv):
     done = False
     while not done:
         try:
-            lines = child.read_nonblocking(size=100)
-            lines = re.sub('\r','',lines)
-            if len(lines) == 0:
+            line = child.readline(timeout=tmout)
+            line = re.sub('\r','',line)
+            if len(line) == 0:
                 continue
-            for line in lines.split('\n'):
-                if debug > 1:
-                    print('\nLine is "%s"' % line, file=sys.stderr)
-                    print('\nLen is %d' % len(line), file=sys.stderr)
-                if expr.match(line):
-                    current += 1
-                    if current == len(inputs):
-                        print('\nLast match found, exiting!', file=sys.stderr)
-                        done = True
-                        continue
-                    print('\nMatch found, next is: %s' % inputs[current], file=sys.stderr)
-                    expr = re.compile(inputs[current])
-            if len(lines) == 0:
-                sleep(1)
+            if debug > 1:
+                print('\nLine is "%s"' % line, file=sys.stderr)
+                print('\nLen is %d' % len(line), file=sys.stderr)
+            if expr.match(line):
+                current += 1
+                if current == len(inputs):
+                    print('\nLast match found, exiting!', file=sys.stderr)
+                    done = True
+                    continue
+                print('\nMatch found, next is: %s' % inputs[current], file=sys.stderr)
+                expr = re.compile(inputs[current])
 
         except pexpect.TIMEOUT as e:
             if time.time() - first > tmout:
