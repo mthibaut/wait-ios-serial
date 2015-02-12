@@ -28,65 +28,86 @@ def main(argv):
 
     # Cmdline parsing
     try:
-        opts, args = getopt.getopt(argv,"dp:s:t:",["debug","port=","server=","timeout="])
+        opts, args = getopt.getopt(argv,"c:di:p:s:t:u:P:",["cycle=","debug","input=","port=","server=","timeout=","username=","password="])
     except getopt.GetoptError:
         usage(2)
     for opt, arg in opts:
+        if opt in ('-c','--cycle'):
+            cycle = int(arg)
         if opt in ('-d','--debug'):
             debug += 1
+        if opt in ('-i','--input'):
+            input = arg
         if opt in ('-p','--port'):
             port = arg
         if opt in ('-s','--server'):
             server = arg
         if opt in ('-t','--timeout'):
             tmout = int(arg)
+        if opt in ('-u','--username'):
+            username = arg
+        if opt in ('-P','--password'):
+            password = arg
     if server == '':
         usage(2)
-    inputs = args
-    if len(inputs) < 1:
-        usage(2)
+
+    if debug > 0:
+        print('Input to look for is: "%s"' % input, file=sys.stderr)
 
     # The meat
-    child = pexpect.spawn('telnet %s %s' % (server,port), timeout=tmout)
+    child = pexpect.spawn('telnet %s %s' % (server,port), timeout=cycle)
 
     if debug > 0:
         child.logfile = sys.stdout
     try:
-        child.expect("Escape character is .*", timeout=10)
+        child.expect("Escape character is .*", timeout=cycle)
     except pexpect.EOF as e:
         exit(1)
 
     # Wait for the system to boot
     first = last = time.time()
-    current = 0
-    expr = re.compile(inputs[current])
-    while True:
+    expr = re.compile(input)
+    userre = re.compile('^[Uu]sername: ')
+    passre = re.compile('^[Pp]assword: ')
+
+    child.send("\r")
+    done = False
+    while not done:
         try:
             lines = child.read_nonblocking(size=100)
             lines = re.sub('\r','',lines)
             if len(lines) == 0:
                 continue
             for line in lines.split('\n'):
-                #print('\nLine is "%s"' % line, file=sys.stderr)
-                #print('\nLen is %d' % len(line), file=sys.stderr)
+                if debug > 1:
+                    print('\nLine is "%s"' % line, file=sys.stderr)
+                    print('\nLen is %d' % len(line), file=sys.stderr)
                 if expr.match(line):
-                    current += 1
-                    if current == len(inputs):
-                        print('\nLast match found, exiting!', file=sys.stderr)
-                        exit(0)
-                    print('\nMatch found, next is: %s' % inputs[current], file=sys.stderr)
-                    expr = re.compile(inputs[current])
-            if len(lines) == 0:
+                    done = True
+                    continue
+                elif userre.match(line):
+                    child.sendline(username)
+                    last = time.time()
+                elif passre.match(line):
+                    child.sendline(password)
+                    last = time.time()
+            if len(lines) > 0:
+                #print('\nGot something, resetting counter: "%s"' % line, file=sys.stderr)
+                last = time.time()
+            else:
                 sleep(1)
 
         except pexpect.TIMEOUT as e:
             if time.time() - first > tmout:
                 print('\nTimeout of %d seconds exceeded, giving up.' % tmout, file=sys.stderr)
                 exit(1)
+            elif time.time() - last > cycle:
+                print('\nCycle timeout of %d seconds exceeded, sending CR.' % cycle, file=sys.stderr)
+                child.send("\r")
 
         except:
             print('Exception: %s' % sys.exc_info()[0], file=sys.stderr)
-            exit(2)
+            exit(1)
 
 if __name__ == "__main__":
     main(sys.argv[1:])
