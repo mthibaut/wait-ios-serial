@@ -46,6 +46,9 @@ def main(argv):
     if len(inputs) < 1:
         usage(2)
 
+    if debug:
+        print('\nDebug level: %d' % debug, file=sys.stderr)
+
     # The meat
     child = pexpect.spawn('telnet %s %s' % (server,port), timeout=tmout)
 
