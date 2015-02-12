@@ -60,7 +60,8 @@ def main(argv):
     first = last = time.time()
     current = 0
     expr = re.compile(inputs[current])
-    while True:
+    done = False
+    while not done:
         try:
             lines = child.read_nonblocking(size=100)
             lines = re.sub('\r','',lines)
@@ -73,7 +74,8 @@ def main(argv):
                     current += 1
                     if current == len(inputs):
                         print('\nLast match found, exiting!', file=sys.stderr)
-                        exit(0)
+                        done = True
+                        continue
                     print('\nMatch found, next is: %s' % inputs[current], file=sys.stderr)
                     expr = re.compile(inputs[current])
             if len(lines) == 0:
