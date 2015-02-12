@@ -68,8 +68,9 @@ def main(argv):
             if len(lines) == 0:
                 continue
             for line in lines.split('\n'):
-                #print('\nLine is "%s"' % line, file=sys.stderr)
-                #print('\nLen is %d' % len(line), file=sys.stderr)
+                if debug > 1:
+                    print('\nLine is "%s"' % line, file=sys.stderr)
+                    print('\nLen is %d' % len(line), file=sys.stderr)
                 if expr.match(line):
                     current += 1
                     if current == len(inputs):

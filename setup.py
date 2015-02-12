@@ -3,7 +3,7 @@
 from distutils.core import setup
 
 setup(name='wait-ios-serial',
-      version='1.0.4',
+      version='1.0.5',
       url='https://github.com/mthibaut/wait-ios-serial',
       description='Wait for a Cisco IOS device to come up from boot',
       author='Maarten Thibaut',
