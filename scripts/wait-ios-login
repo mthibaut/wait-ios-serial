@@ -83,6 +83,8 @@ def main(argv):
                     print('\nLine is "%s"' % line, file=sys.stderr)
                     print('\nLen is %d' % len(line), file=sys.stderr)
                 if expr.match(line):
+                    if debug > 0:
+                        print('\nExiting, match found in line: "%s"' % line, file=sys.stderr)
                     done = True
                     continue
                 elif userre.match(line):
